@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">shell</string>
+    <string name="description">使用html控制shell</string>
+    <string name="help">帮助内容</string>
+    <string name="htmlPath">-/shell/index.html</string>
+    <string name="refresh">刷新</string>
+</resources>

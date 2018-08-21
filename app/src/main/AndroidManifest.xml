@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?><!-- android:versionCode与android:versionName="1.0"不能使用@xx/xx这种方式赋值 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="qidizi.shell"
+    android:versionCode="201712291"
+    android:versionName="1.0">
+
+    <uses-sdk android:minSdkVersion="14" />
+    <!-- uses-permission要放在application前 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+
+    <!--logo会出现在标题栏上，icon在桌面-->
+    <application
+        android:allowBackup="false"
+        android:description="@string/description"
+        android:label="@string/app_name"
+        android:theme="@android:style/Theme.Holo.Light">
+
+        <!--         android:excludeFromRecents 不出现在最近任务列表中 -->
+        <activity
+            android:name=".browser"
+            android:alwaysRetainTaskState="true"
+            android:excludeFromRecents="false"
+            android:multiprocess="false"
+            android:screenOrientation="portrait">
+            <intent-filter>
+
+                <!-- 在桌面显示图标 -->
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+                <!-- 解决 App is not indexable by Google Search; consider adding at least one Activity提示 -->
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
