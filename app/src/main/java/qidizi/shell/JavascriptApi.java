@@ -9,9 +9,15 @@ import android.widget.Toast;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.URL;
-import java.io.*;
+import java.io.File;
 import android.webkit.*;
 import org.json.*;
+import java.lang.Process;
+import android.os.Environment;
+import android.os.*;
+import java.io.InputStreamReader;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 
 /**
  * 实现js api给web调用
@@ -30,12 +36,23 @@ class JavascriptApi
 
     @JavascriptInterface
     public void bash(
-        String... args
+        String json
     )
     {
-        WechatShareTask task = new WechatShareTask(myBrowser);
-        // 如果 thumb 为空字符串，doInBackground就不会执行
-        task.execute(args);
+		try{
+        BashTask task = new BashTask(myBrowser);
+		JSONArray obj = new JSONArray(json);
+		String[] args =new String[ obj.length()];
+		
+		for(int i= 0;i<obj.length();i++){
+			args[i]=obj.getString(i);
+		}
+		
+		// 如果 thumb 为空字符串，doInBackground就不会执行
+		 task.execute(args);
+		} catch(Exception e){
+			showToast("bash 调用出现异常：" + e.getStackTrace().toString());
+		}
     }
 
 
@@ -49,12 +66,12 @@ class JavascriptApi
     /**
      * <参数类型,进度值,任务最终值>
      */
-    static private class WechatShareTask extends AsyncTask<String[], Void, String[]>
+    static private class BashTask extends AsyncTask<String[], Void, String[]>
     {
         // 使用弱引用方式，防止内存漏泄
         final private WeakReference<browser> myBrowser;
 
-        WechatShareTask(browser br)
+        BashTask(browser br)
         {
             this.myBrowser = new WeakReference<browser>(br);
         }
@@ -69,7 +86,7 @@ class JavascriptApi
             try
             {
                 String[] env=new String[]{""};
-                File dir = new File("/data/data/qidizi.shell");
+                File dir = new File(Environment.getExternalStorageDirectory().toString() +File.separator+"-/shell");
                 Process ps =Runtime.getRuntime().exec(params[0], env, dir);
 
                 //这句话就是shell与高级语言间的调用
