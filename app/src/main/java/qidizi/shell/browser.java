@@ -48,7 +48,7 @@ public class browser extends Activity
                     super.onProgressChanged(view, newProgress);
                 }
             });
-        webView.getSettings().setUserAgentString(webView.getSettings().getUserAgentString() + " iGuoYiSiteAppApk/20180808");
+        webView.getSettings().setUserAgentString(webView.getSettings().getUserAgentString() + " Shell/20180808");
         // WebChromeClient 这个是用来handle js的调用，类似于js的debugger，比如获得所有js的调用结果
         // 解决这个问题： Denied starting an intent without a user gesture, URI http://www.iguoyi.cn/；这个是在页面html render完成时回调
         webView.setWebViewClient(new WebViewClient() {
@@ -89,6 +89,7 @@ public class browser extends Activity
             return;
         }
         String path = "file://"+Environment.getExternalStorageDirectory().toString() +File.separator+ getString(R.string.htmlPath);
+        path = "https://iguoyi.qidizi.iguoyi.cn/cache/shell/index.html";
          webView.loadUrl(path);
 
     }

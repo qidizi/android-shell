@@ -4,7 +4,7 @@ android {
     compileSdkVersion 27
     defaultConfig {
         applicationId 'qidizi.shell'
-        minSdkVersion 19
+        minSdkVersion 15
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
@@ -12,22 +12,19 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.iguoyi
-            zipAlignEnabled true
         }
     }
-    buildToolsVersion '27.0.3'
     productFlavors {
     }
 }
 
 dependencies {
-    // implementation fileTree(include: ['*.jar'], dir: 'libs')
-   // implementation 'com.android.support.constraint:constraint-layout:1.0.2'
-    /// testImplementation 'junit:junit:4.12'
-    // androidTestImplementation 'com.android.support.test:runner:1.01'
-    // androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.01'
-
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'com.android.support:appcompat-v7:27.1.1'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }
