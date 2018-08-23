@@ -89,7 +89,7 @@ public class browser extends Activity
             return;
         }
         String path = "file://"+Environment.getExternalStorageDirectory().toString() +File.separator+ getString(R.string.htmlPath);
-        path = "https://iguoyi.qidizi.iguoyi.cn/cache/shell/index.html";
+        //path = "https://iguoyi.qidizi.iguoyi.cn/cache/shell/index.html";
          webView.loadUrl(path);
 
     }

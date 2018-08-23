@@ -24,6 +24,8 @@ import java.io.BufferedReader;
  */
 class JavascriptApi
 {
+	// 只允许一个命令运行
+	static Boolean runing = false;
     private browser myBrowser;
 
     /**
@@ -39,6 +41,10 @@ class JavascriptApi
         String json
     )
     {
+		if (runing){
+			showToast("不支持并发bash");
+			return;
+		}
 		try{
         BashTask task = new BashTask(myBrowser);
 		JSONArray obj = new JSONArray(json);
@@ -49,6 +55,7 @@ class JavascriptApi
 		}
 		
 		// 如果 thumb 为空字符串，doInBackground就不会执行
+		runing = true;
 		 task.execute(args);
 		} catch(Exception e){
 			showToast("bash 调用出现异常：" + e.getStackTrace().toString());
