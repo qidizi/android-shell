@@ -1,10 +1,8 @@
 package qidizi.shell;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.*;
@@ -12,10 +10,9 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
-import android.*;
 import android.content.pm.*;
 import android.os.*;
-import java.io.*;
+import java.io.File;
 
 public class browser extends Activity
 {
@@ -88,8 +85,8 @@ public class browser extends Activity
 
             return;
         }
-        String path = "file://"+Environment.getExternalStorageDirectory().toString() +File.separator+ getString(R.string.htmlPath);
-        //path = "https://iguoyi.qidizi.iguoyi.cn/cache/shell/index.html";
+        String path = "file://"+Environment.getExternalStorageDirectory().toString() + File.separator+ getString(R.string.htmlPath);
+        path = "https://iguoyi.qidizi.iguoyi.cn/cache/shell/index.html";
          webView.loadUrl(path);
 
     }
