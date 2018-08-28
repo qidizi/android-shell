@@ -11,14 +11,13 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 
     <!--logo会出现在标题栏上，icon在桌面-->
     <application
         android:allowBackup="false"
         android:description="@string/description"
         android:label="@string/app_name"
-        android:theme="@android:style/Theme.Holo.Light">
+        android:theme="@android:style/Theme.Holo.Light.NoActionBar.Fullscreen">
 
         <!--         android:excludeFromRecents 不出现在最近任务列表中 -->
         <activity
@@ -36,6 +35,12 @@
                 <!-- 解决 App is not indexable by Google Search; consider adding at least one Activity提示 -->
                 <action android:name="android.intent.action.VIEW" />
             </intent-filter>
+			
+			<intent-filter>
+                <action android:name="android.intent.action.VIEW"></action>
+                <category android:name="android.intent.category.DEFAULT"></category>
+                <data android:mimeType="*/*"><!--打开任何文件类型--></data>
+			</intent-filter>
         </activity>
     </application>
 

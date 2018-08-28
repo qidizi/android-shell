@@ -18,57 +18,105 @@ import android.os.Environment;
 import java.io.InputStreamReader;
 import java.io.BufferedReader;
 import java.util.ArrayList;
+import java.util.*;
+import android.content.pm.*;
+import android.content.*;
 
 /**
  * 实现js api给web调用
  */
-class JavascriptApi {
-    // 只允许一个命令运行
-    private static Boolean running = false;
+class JavascriptApi
+{
     // 猜测loadUrl可能会有长度限制，使用js 拉 java方式来得到结果
     private static ArrayList<String> result = new ArrayList<String>();
     private browser myBrowser;
-    private static BashTask task;
+    private static BashTask task = null;
+	private static Process ps = null;
 
     /**
      * Instantiate the interface and set the context
      */
-    JavascriptApi(browser c) {
+    JavascriptApi(browser c)
+	{
         myBrowser = c;
     }
 
     @JavascriptInterface
-    public String bash(String cmd) {
-        String usage = "用法：apk.bash('ls')";
+    public String bash(String cmd)
+	{
+        String usage = "用法：apk.bash(['ls','-a', '/data/data/qidizi.shell'])";
 
-        if (running) {
-            return "不支持并发bash";
+        if (null != task && AsyncTask.Status.FINISHED != task.getStatus())
+		{
+            return "不支持并发！上一bash命令未完成";
         }
 
-        if (null == cmd) {
+        if (null == cmd)
+		{
             return usage;
         }
 
+		JSONArray json ;
+
+		try
+		{
+			json = new JSONArray(cmd);
+		}
+		catch (Exception e)
+		{
+			return "bash参数不是 json-encode 字符串";
+		}
+
+		if (json.length() < 1)
+		{
+			return "bash 参数array长度不能小于1";
+		}
+
+		List<String> cmds = new ArrayList<String>();
+
+		try
+		{
+			for (int i = 0;i < json.length();i++)
+			{
+				String line = json.getString(i).trim();
+				if ("".equals(line)) continue;
+				cmds.add(line);
+			}
+		}
+		catch (Exception e)
+		{
+			return "bash 参数array某元素不是字符串类型：" + e.getMessage();
+		}
+
+		if (cmds.size() < 1) return "bash 参数不能为空";
         task = new BashTask(myBrowser);
         // 如果 thumb 为空字符串，doInBackground就不会执行
-        running = true;
-        task.execute(cmd);
+        task.execute(cmds);
         // 只能返回这个值才表示执行成功
         return "SUCCESS";
     }
 
     @JavascriptInterface
-    public String CtrlC() {
-        if (running) {
-            return task.cancel(true) ? "SUCCESS" : "FAIL";
+    public String ctrlC()
+	{
+        if (null != task && AsyncTask.Status.FINISHED != task.getStatus())
+		{
+			if (null != ps) {
+				ps.destroy();
+				ps = null;
+			}
+			
+            return task.cancel(true) ? "SUCCESS" : "无法取消";
         }
 
-        return "NOT_RUNNING";
+        return "未运行";
     }
 
     @JavascriptInterface
-    public String popLine() {
-        if (result.size() > 0) {
+    public String popResult()
+	{
+        if (result.size() > 0)
+		{
             String line = result.get(0);
             result.remove(0);
             return line;
@@ -77,34 +125,43 @@ class JavascriptApi {
         return null;
     }
 
-    private void showToast(String text) {
-        Toast.makeText(myBrowser, text, Toast.LENGTH_LONG).show();
-    }
-
     /**
      * <参数类型,进度值,任务最终值>
      */
-    static private class BashTask extends AsyncTask<String, String, String> {
+    static private class BashTask extends AsyncTask<List<String>, String, Void>
+	{
         // 使用弱引用方式，防止内存漏泄
         final private WeakReference<browser> myBrowser;
 
-        BashTask(browser br) {
+        BashTask(browser br)
+		{
             this.myBrowser = new WeakReference<browser>(br);
         }
-
+		
         /**
          * 它的参数是通过new Task().execute(参数)传递的
          */
-        protected String doInBackground(String... params) {
-            Process ps;
+        protected Void doInBackground(List<String>... params)
+		{
             ProcessBuilder pb = new ProcessBuilder(params[0]);
             pb.redirectErrorStream(true);
-            pb.directory(new File(Environment.getExternalStorageDirectory().toString()));
+			Map<String,String> env = pb.environment();
+			env.put("PATH","/data/data/qidizi.shell/files/bin:" + env.get("PATH"));
+			pb.directory(new File(Environment.getExternalStorageDirectory().toString()));
 
-            try {
+            try
+			{
+				if (null != ps){
+					ps.destroy();
+					ps = null;
+				}
+				
                 ps = pb.start();
-            } catch (Exception e) {
-                return "无法启动bash线程，原因：" + e.getMessage();
+            }
+			catch (Exception e)
+			{
+                JavascriptApi.result.add("error>运行bash失败：" + e.getMessage());
+				return null;
             }
 
             InputStream inputstream = ps.getInputStream();
@@ -112,79 +169,51 @@ class JavascriptApi {
             BufferedReader bufferedreader = new BufferedReader(inputstreamreader);
             String line;
 
-            try {
-                while ((line = bufferedreader.readLine()) != null) {
-                    publishProgress(line);
+            try
+			{
+                while ((line = bufferedreader.readLine()) != null)
+				{
+                    JavascriptApi.result.add("out>" +line);
 
-                    if (isCancelled()) {
+                    if (isCancelled())
+					{
                         // 要求退出
                         ps.destroy();
+						JavascriptApi.result.add("cancell>检测到退出信号");
+						return null;
                     }
                 }
-            } catch (Exception e) {
+            }
+			catch (Exception e)
+			{
                 ps.destroy();
-                return "读取bash输出行出错信息：" + e.getMessage();
+                JavascriptApi.result.add("error>读取bash输出异常：" + e.getMessage());
+				return null;
             }
 
             //使用exec执行不会等执行成功以后才返回,它会立即返回
             //所以在某些情况下是很要命的(比如复制文件的时候)
             //使用waitFor()可以等待命令执行完成以后才返回
 
-            try {
+            try
+			{
                 // 如果这个子进程已经被其它线程要求waitFor时，就会出现异常
-                if (0 != ps.waitFor()) {
-                    return "bash 线程未能正常结束，状态码：\n" + ps.exitValue();
+                if (0 != ps.waitFor())
+				{
+					ps.destroy();
+                    JavascriptApi.result.add("error>bash异常退出码：" + ps.exitValue());
+					return null;
                 }
-            } catch (Exception e) {
+            }
+			catch (Exception e)
+			{
                 ps.destroy();
-                return "无法要求bash hold线程：" + e.getMessage();
+                JavascriptApi.result.add("error>尝试hold直到bash退出失败：" + e.getMessage());
+				return null;
             }
 
-            return "SUCCESS";
-        }
-
-        @Override
-        protected void onCancelled() {
-            super.onCancelled();
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected void onCancelled(String s) {
-            super.onCancelled(s);
-        }
-
-        @Override
-        protected void onProgressUpdate(String... values) {
-            super.onProgressUpdate(values);
-            result.add(values[0]);
-            bashEcho("read", values[0]);
-        }
-
-        /**
-         * resut 来自 doInBackground return
-         * ui 更新只能在这里处理
-         * 注意，只有签名与状态为发布的才行，否则就会闪下
-         */
-        protected void onPostExecute(String line) {
-            JavascriptApi.running = false;
-            bashEcho("SUCCESS".equals(line) ? "SUCCESS" : "FAIL", line);
-        }
-
-        private void bashEcho(String status, String line) {
-            myBrowser.get().getWebView().loadUrl("javascript:" +
-                    "+function(status,line){" +
-                    "if('function' !== typeof bashEcho) return alert('function bashEcho(status,line);不存在，无法接收响应');" +
-                    "bashEcho(status,line)" +
-                    "}('" + status + "'," + (null == line ? "apk.popLine()" : line) + ");");
-        }
-
-        private void showToast(String text) {
-            Toast.makeText(myBrowser.get(), text, Toast.LENGTH_LONG).show();
+            JavascriptApi.result.add("exit>" + ps.exitValue());
+			return null;
         }
     }
 }

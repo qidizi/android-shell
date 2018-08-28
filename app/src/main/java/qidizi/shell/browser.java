@@ -13,6 +13,10 @@ import android.widget.Toast;
 import android.content.pm.*;
 import android.os.*;
 import java.io.File;
+import android.content.*;
+import java.io.*;
+import android.net.*;
+import org.json.*;
 
 public class browser extends Activity
 {
@@ -22,7 +26,14 @@ public class browser extends Activity
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
+		// 要先执行这个，否则toast无法使用
         super.onCreate(savedInstanceState);
+
+		if (showIntent()) {
+			return;
+		}
+		
+		bashInit();
         // 修改标题栏左边logo与app不同
         //requestWindowFeature(Window.FEATURE_LEFT_ICON);
         //getWindow().setFeatureDrawableResource(Window.FEATURE_LEFT_ICON, R.drawable.status_bar_logo);
@@ -56,13 +67,6 @@ public class browser extends Activity
                     setTitle(webView.getTitle());
                     super.onPageFinished(view, url);
                 }
-
-                @Override
-                public boolean shouldOverrideUrlLoading(WebView view, String url)
-                {
-                    //false 表示点击的url交webview来处理，而不是外面浏览器，但是不会拦post请求
-                    return false;
-                }
             });
         webView.addJavascriptInterface(new JavascriptApi(this), "apk");
         setContentView(webView);
@@ -85,11 +89,63 @@ public class browser extends Activity
 
             return;
         }
-        String path = "file://"+Environment.getExternalStorageDirectory().toString() + File.separator+ getString(R.string.htmlPath);
-        path = "https://iguoyi.qidizi.iguoyi.cn/cache/shell/index.html";
-         webView.loadUrl(path);
+		
+        String path; 
 
+		if ("xiaomi".equalsIgnoreCase(android.os.Build.MANUFACTURER))
+		{
+			path = "file://" + Environment.getExternalStorageDirectory().toString() + File.separator + getString(R.string.htmlPath);
+		}
+		else
+		{
+			path = "https://iguoyi.qidizi.iguoyi.cn/cache/shell/index.html";
+		}
+		
+		webView.loadUrl(path);
     }
+	
+	private void bashInit(){
+		String bin = this.getFilesDir().getAbsolutePath() 
+			+ File.separator + "bin" + File.separator;
+		
+		File binFile = new File(bin);
+		
+		if (!binFile.exists()){
+			binFile.mkdir();
+		}
+		
+		binFile = new File(bin + "busybox");
+		
+		if (!binFile.exists()){
+			InputStream input;
+			try{
+				input = this.getAssets().open("busybox");
+				OutputStream output = new FileOutputStream(binFile);  
+				byte[] buffer = new byte[1024];  
+				int length = input.read(buffer);
+				while(length > 0)
+				{
+					output.write(buffer, 0, length); 
+					length = input.read(buffer);
+				}
+
+				output.flush();  
+				input.close();  
+				output.close();  
+				binFile.setExecutable(true,false);
+			} catch (Exception e){
+				showToast("复制busybox失败:" + e.getMessage());
+				return;
+			}
+			
+			try {
+				Runtime.getRuntime().exec(binFile.getAbsolutePath() + " --install -s " + bin);
+				showToast("busybox安装完成");
+			}catch(Exception e){
+				showToast("安装busybox异常:" + e.getMessage());
+			}
+		}
+	}
 
     /**
      * 获取webView
@@ -99,44 +155,6 @@ public class browser extends Activity
     public WebView getWebView()
     {
         return webView;
-    }
-
-    /**
-     * 绑定标题栏上右上角菜单显示
-     *
-     * @param menu 菜单
-     * @return boolean
-     */
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu)
-    {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.action, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    /**
-     * 标题栏上右上角菜单点击处理
-     *
-     * @param item
-     * @return
-     */
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item)
-    {
-        switch (item.getItemId())
-        {
-            case R.id.help:
-                // 打开国艺首页
-                Toast.makeText(this, R.string.help, Toast.LENGTH_LONG).show();
-                return true;
-            case R.id.refresh:
-                webView.reload();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
     }
 
     /**
@@ -174,5 +192,35 @@ public class browser extends Activity
                 }
             }).show();
         return false;
+    }
+
+    private void showToast(String text)
+	{
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show();
+    }
+	
+
+    /**
+	 显示intent相关信息
+	 */
+    private boolean showIntent(){
+        Intent intent = getIntent();
+        String action = intent.getAction();
+
+        if (!intent.ACTION_VIEW.equals(action)) {
+            return false;
+        }
+
+		String path = intent.getDataString();
+		if (null == path || "".equals(path)) return false;
+		//path = path.replaceAll(".+com.android.fileexplorer.myprovider.+external_files","") + "#" + path;
+        //path = "file://" + path;
+        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        // 将文本内容放到系统剪贴板里。
+        cm.setText(path);
+        Toast.makeText(this.getApplication(),"路径已经复制成功，可以尝试在浏览器地址栏中粘贴打开。",Toast.LENGTH_LONG).show();
+		// 调用后就直接结束app
+		this.finish();
+		return true;
     }
 }
