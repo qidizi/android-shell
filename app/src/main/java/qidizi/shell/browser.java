@@ -138,12 +138,14 @@ public class browser extends Activity
 				return;
 			}
 			
+			/*
 			try {
 				Runtime.getRuntime().exec(binFile.getAbsolutePath() + " --install -s " + bin);
 				showToast("busybox安装完成");
 			}catch(Exception e){
 				showToast("安装busybox异常:" + e.getMessage());
 			}
+			*/
 		}
 	}
 

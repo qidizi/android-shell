@@ -146,8 +146,9 @@ class JavascriptApi
             ProcessBuilder pb = new ProcessBuilder(params[0]);
             pb.redirectErrorStream(true);
 			Map<String,String> env = pb.environment();
-			env.put("PATH","/data/data/qidizi.shell/files/bin:" + env.get("PATH"));
-			pb.directory(new File(Environment.getExternalStorageDirectory().toString()));
+			String files = myBrowser.get().getApplicationContext().getFilesDir().getAbsolutePath() + "/bin";
+			env.put("PATH",files + ":" + env.get("PATH"));
+			pb.directory(new File(files));
 
             try
 			{
