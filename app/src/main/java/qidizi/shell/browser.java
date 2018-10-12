@@ -90,18 +90,8 @@ public class browser extends Activity
             return;
         }
 		
-        String path; 
-
-		if ("xiaomi".equalsIgnoreCase(android.os.Build.MANUFACTURER))
-		{
-			path = "file://" + Environment.getExternalStorageDirectory().toString() + File.separator + getString(R.string.htmlPath);
-		}
-		else
-		{
-			path = "https://iguoyi.qidizi.iguoyi.cn/cache/shell/index.html";
-		}
-		
-		webView.loadUrl(path);
+        //加载apk内部html
+		webView.loadUrl("file:///android_asset/index.html");
     }
 	
 	private void bashInit(){
