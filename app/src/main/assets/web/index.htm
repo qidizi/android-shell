@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		 <meta content="text/html; charset=utf-8" http-equiv="content-type"/>
+		<title>qidizi shell</title>
+		<style>
+			html{width:100%;height:100%;display:block;}
+			body{color:red;font-size:62.5%;width:100%;height:100%;display:block;padding:0;margin:0;}
+			.result{font-size:1rem;width:100%;border-top:1px solid black;padding:10px;box-sizing:border-box;word-break: break-all;word-wrap: break-word;}
+			.resultLine{margin-bottom:1rem;}
+			.bashBox{margin-top:1.6rem;line-height: 1rem;}
+			.bash{width:100%;height:50%;box-sizing:border-box;font-size:1rem;}
+			.bashLine{border-bottom:1px solid lightgray;box-sizing:border-box;line-height: 1rem;}
+			.bashLine input{color:green;font-size:0.8rem;width:70%;text-align:center;border:0px none;box-sizing:border-box;height:1rem;line-height:1rem;}
+			.bashLine a{line-height:1rem;height:1rem;box-sizing:border-box;display:inline-block;margin:auto auto;text-decoration:none;font-weight:bold;padding:0 0.6rem;border:1px dotted lightgray;}
+			.bashLine b{width:30%;box-sizing:border-box;display:inline-flex;justify-content:space-between;}
+			.ctrl a{box-sizing:border-box;display:inline-block;margin:auto auto;text-decoration:none;}
+			.ctrl select{box-sizing:border-box;display:inline-block;margin:auto auto;}
+			.ctrl{box-sizing:border-box;display:flex;justify-content:space-between;width:100%;position:fixed;top:0;left:0;border-bottom:1px solid lightgray;background:white;height:1.5rem;line-height:1.5rem;z-index: 999999;}
+			.error{color:red;}
+			.exit{color:black;}
+			.out{color:blue;}
+			.cancell{color:yellow;}
+			.error b,.exit b,.out b,.cancell b{font-weight:bold;display:inline-block;font-size:0.1rem;transform:rotate(-45deg);line-height:1rem;z-index:0;}
+			#jsErrorBox,#sourceCodeBox{background-color:white;z-index:99999999;display:none;position:fixed;top:0;left:0;width:100%;height:100%;}
+			#jsErrorBox h1,#sourceCodeBox h1{text-align:center;margin-top:0;position:fixed;top:0;left:0;width:100%;background-color:lightgray;}
+			#jsErrorBox hr{border-width:0 0 0 1px;}
+			#jsError,#sourceCode{height:100%;width:100%;overflow:auto;box-sizing:border-box;padding-top:50px;}
+		</style>
+	</head>
+	<body>
+        <div id="sourceCodeBox">
+			<h1>
+                <strong>本html源码</strong> 
+                <a href="javascript:vo$(0);" onclick="$('#sourceCodeBox').style.display = 'none';"><small>隐藏</small></a>
+            </h1>
+			<textarea id="sourceCode"></textarea>
+		</div>
+		<div id="jsErrorBox">
+			<h1>
+                <strong>JS异常信息</strong> 
+                <a href="javascript:vo$(0);" onclick="$('#jsError').innerHTML = '';"><small>清屏</small></a>
+                <a href="javascript:vo$(0);" onclick="$('#jsErrorBox').style.display = 'none';"><small>隐藏</small></a>
+            </h1>
+			<pre id="jsError"></pre>
+		</div>
+		<script>
+			window.onerror = function myAlert(){
+                var txt = document.createTextNode(JSON.stringify(arguments));
+                var hr = document.createElement('hr');
+				document.getElementBy$('jsError').appendChild(hr);
+				document.getElementBy$('jsError').appendChild(txt);
+				document.getElementBy$('jsErrorBox').style.display = "block";
+			}
+		</script>
+		<script>
+			var html = document.cookie.match(/HTML=[^=;]*/);
+			var date = new Date();
+            var expireDays = 365;
+            date.setTime(date.getTime() + expireDays * 24 * 3600 * 1000);
+			document.cookie = 'HTML=' + '; path=/; expire=' + date.toGMTString() + ';';
+	    </script>
+		<div class="ctrl">
+		    <select id="moreAction">
+			    <option>更多操作</option>
+			    <option value="linuxRun">linux启动</option>
+			    <option value="linuxStop">linux停止</option>
+			    <option value="linuxStatus">linux状态</option>
+			    <option value="linuxDeploy">linux重装</option>
+			    <option value="linuxConfig">linux重置</option>
+			    <option value="reboot">重启手机</option>
+			    <option value="refresh">重载HTML</option>
+			    <option value="ps">运行中进程</option>
+			    <option value="viewSource">查看本html源码</option>
+			    <option value="about">关于本应用</option>
+			</select>
+			<a href="javascript:vo$(0);" name="top">TOP</a>
+		    <a href="javascript:vo$(0);" name="ctrlC">CTRL+C</a>
+		    <a href="javascript:vo$(0);" name="clear">清屏</a>
+		    <a href="javascript:vo$(0);" name="run">运行</a>
+		</div>
+		<div id="bashBox" class="bashBox"></div>
+		<div id="result" class="result"></div>
+		<script>
+			// cmd  为一个命令数组，每节命令字符为一个元素
+			function bash(cmd){
+				var result = apk.bash(JSON.stringify(cmd));
+				if ("SUCCESS" === result) return;
+				alert(result);
+			}
+			
+			function cancell(){
+	            var result = apk.ctrlC();
+	            if ("SUCCESS" === result) return;
+				alert(result);
+			}
+			
+			setInterval(function(){
+				var line = apk.popResult();
+				if (undefined == line) return;
+				var line2 = line.match(/^([^>]*)>([\s\S]*)/);
+				var dom = document.createTextNode(line2[2]);
+				var div = document.createElement("div");
+				div.className = line2[1] + " resultLine";
+				div.innerHTML = "<b>" + line2[1] + "</b>";
+				div.appendChild(dom);
+				var resultDom = $("#result");
+                resultDom.insertBefore(div,resultDom.firstChild);
+            },0);
+			
+			function $(s){
+				return document.querySelector(s);
+			}
+			
+            function ids(s){
+				return document.querySelectorAll(s);
+			}
+			
+			$("#moreAction").onchange = function(){
+				var linuxDeployCli = "/sdcard/-/java/android-shell/example/linux-deploy.sh";
+				switch(this.value){
+					case "reboot":
+					    if (!confirm("确认要重启")) break;
+					    bash(["su","-c","reboot"]);
+					    break;
+					case "linuxDeploy":
+					    if (!confirm("确认要重新安装")) break;
+					    bash(["su","-c","sh " + linuxDeployCli + " deploy"]);
+					    break;
+					case "linuxRun":
+					    bash(["su","-c","sh " + linuxDeployCli + " start"]);
+					    break;
+					case "linuxStop":
+					    if (!confirm("确认要停止")) break;
+					    bash(["su","-c","sh " + linuxDeployCli + " stop"]);
+					    break;
+					case "linuxConfig":
+					    if (!confirm("确认要重新配置")) break;
+					    bash(["su","-c","sh " + linuxDeployCli + " config"]);
+					    break;
+					case "linuxStatus":
+					    bash(["su","-c","sh " + linuxDeployCli + " status"]);
+					    break;
+					case "refresh":
+					    location.reload();
+                        break;
+					case "ps":
+						var grep = prompt("grep 进程","");
+						grep = grep ? ' | grep "' + grep + '" ' : '';
+					    bash(["su","-c","/data/data/qidizi.shell/files/bin/busybox ps aux " + grep]);
+					    break;
+					case 'about':
+					    window.open('https://github.com/qidizi/android-shell');
+					    break;
+					case "viewSource":
+					    $('#sourceCode').value = document.documentElement.outerHTML;
+					    $('#sourceCodeBox').style.display = 'block';
+					    break;
+                        
+				}
+				
+				this.selectedIndex = 0;
+			}
+			
+			window.onload = function(){
+				add();
+			};
+			function add(src){
+				var div = document.createElement("div");
+				div.className ="bashLine";
+                div.innerHTML = '<b><a ' +
+            'href="javascript:vo$(0);" class="jsClsBash" name="addBashBefore">+</a><a ' +
+            'href="javascript:vo$(0);" class="jsClsBash" name="deleteBash">-</a><a ' +
+            'href="javascript:vo$(0);" class="jsClsBash" name="addBashAfter"' +
+            '>+</a></b><input ' +
+            'class="bash jsBash" onfocus="this.select();" placeholder="输入命令 每节一行"/>';
+                $("#bashBox").insertBefore(div,src);
+			}
+			function deleteBash(){
+				// 最后一个不能删除
+				if (ids(".bashLine").length < 2) return;
+				this.parentNode.parentNode.remove();
+			}
+			function addBashBefore(){
+			    add(this.parentNode.parentNode);
+			}
+			function addBashAfter(){
+				add(this.parentNode.parentNode.nextSibling);
+			}
+			document.onclick = function(e){
+				var dom = e.srcElement;
+				
+				switch(dom.name){
+					case "deleteBash":
+					    deleteBash.call(dom);
+					    break;
+					case "addBashBefore":
+					    addBashBefore.call(dom);
+					    break;
+					case "addBashAfter":
+					    addBashAfter.call(dom);
+					    break;
+					case "clear":
+					    $("#result").innerHTML = '';
+					    break;
+					case "run":
+					    var cmd =[];
+					    var lines = ids(".jsBash");
+					
+					    for (var i = 0; i < lines.length; i++){
+						    var line = lines[i].value.replace(/^\s+|\s+$/g,"");
+						    if ("" === line) continue;
+						    cmd.push(line);
+						}
+						
+					    bash(cmd);
+					    break;
+					case "ctrlC":
+					    cancell();
+					    break;
+					case "top":
+					    document.body.scrollTop = 0;
+					    break;
+				}
+			};
+			
+			function openAny(uri){
+				// 打开任意文件
+				$("#result").innerHTML = '<a href="file://' + uri + '" target="_blank">' + uri + '</a>';
+			}
+		</script>
+	</body>
+</html>

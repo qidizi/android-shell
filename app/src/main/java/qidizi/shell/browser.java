@@ -34,40 +34,11 @@ public class browser extends Activity
 		}
 		
 		bashInit();
-        // 修改标题栏左边logo与app不同
-        //requestWindowFeature(Window.FEATURE_LEFT_ICON);
-        //getWindow().setFeatureDrawableResource(Window.FEATURE_LEFT_ICON, R.drawable.status_bar_logo);
         webView = new WebView(this);
-        // 加载进度显示在标题栏上
-        getWindow().requestFeature(Window.FEATURE_PROGRESS);
-        webView.setWebContentsDebuggingEnabled(true);
         //设置WebView属性，能够执行Javascript脚本
         webView.getSettings().setJavaScriptEnabled(true);
         // 启用 window.localStorage
         webView.getSettings().setDomStorageEnabled(true);
-        //webView.getSettings().setDefaultTextEncodingName("UTF-8");
-        //webView.getSettings().setSaveFormData(true);
-        webView.setWebChromeClient(new WebChromeClient() {
-                @Override
-                public void onProgressChanged(WebView view, int newProgress)
-                {
-                    // 显示实时进度
-                    setProgress(newProgress * 100);
-                    super.onProgressChanged(view, newProgress);
-                }
-            });
-        webView.getSettings().setUserAgentString(webView.getSettings().getUserAgentString() + " Shell/20180808");
-        // WebChromeClient 这个是用来handle js的调用，类似于js的debugger，比如获得所有js的调用结果
-        // 解决这个问题： Denied starting an intent without a user gesture, URI http://www.iguoyi.cn/；这个是在页面html render完成时回调
-        webView.setWebViewClient(new WebViewClient() {
-                @Override
-                public void onPageFinished(WebView view, String url)
-                {
-                    // 页面加载完成，显示当前页标题
-                    setTitle(webView.getTitle());
-                    super.onPageFinished(view, url);
-                }
-            });
         webView.addJavascriptInterface(new JavascriptApi(this), "apk");
         setContentView(webView);
         if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -89,9 +60,14 @@ public class browser extends Activity
 
             return;
         }
-		
-        //加载apk内部html
-		webView.loadUrl("file:///android_asset/index.html");
+        //使用file协议加载apk内部html,这里要注意几个问题
+        // 放到assets/index.htm,总是提示文件不存在，但是解压apk发现路径正确
+        // 使用assets/1.htm，却能正常使用，1是数字不是英文的l
+        // 如assets/web/*.htm；文件名不限制
+        // 不管是不是有子目录，后缀不能使用.html，否则会提示找不到文件，只能用htm
+        String path = "file:///android_asset/web/index.htm";
+       // path= "http://www.qq.com";
+		webView.loadUrl(path);
     }
 	
 	private void bashInit(){
