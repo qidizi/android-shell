@@ -228,6 +228,18 @@
 				// 打开任意文件
 				$("#result").innerHTML = '<a href="file://' + uri + '" target="_blank">' + uri + '</a>';
 			}
+			
+			function alert2(txt,cb) {
+				
+			}
 		</script>
+		<div id="jsAlertBox">
+			<h1>
+                <strong id="jsAlertTitle">提示</strong> 
+                <a href="javascript:vo$(0);" onclick="$('#jsError').innerHTML = '';"><small>清屏</small></a>
+                <a href="javascript:vo$(0);" onclick="$('#jsErrorBox').style.display = 'none';"><small>隐藏</small></a>
+            </h1>
+			<pre id="jsError"></pre>
+		</div>
 	</body>
 </html>

@@ -164,6 +164,7 @@ fail2die()
     exit 1
 }
 
+
 linuxStart()
 {
    echo "处理中...";
